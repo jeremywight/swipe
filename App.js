@@ -35,6 +35,19 @@ export default class App extends React.Component {
       );
   }
 
+  renderNoMoreCards() {
+    return (
+      <Card title="All Done!">
+        <Text style={{ marginBottom: 10 }}>
+          You've swiped the last card!
+        </Text>
+        <Button 
+        icon={{ name: 'code' }}
+        backgroundColor="#03A9F4"
+        title="View More" />
+      </Card>
+    );
+  }
 
   render() {
     return (
@@ -42,6 +55,7 @@ export default class App extends React.Component {
         <Deck
           data={DATA}
           renderCard={this.renderCard}
+          renderNoMoreCards={this.renderNoMoreCards}
         />
       </View>
     );

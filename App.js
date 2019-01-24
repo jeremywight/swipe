@@ -35,16 +35,24 @@ export default class App extends React.Component {
       );
   }
 
+  getMoreCards() {
+    // Plan to implement a callback to pull more DATA for cards
+    return (
+      null
+    );
+  }
+
   renderNoMoreCards() {
     return (
-      <Card title="All Done!">
+      <Card title="All Done!" style={{ marginTop: 50 }}>
         <Text style={{ marginBottom: 10 }}>
           You've swiped the last card!
         </Text>
         <Button 
         icon={{ name: 'code' }}
         backgroundColor="#03A9F4"
-        title="View More" />
+        title="View More"
+        onPress={this.getMoreCards} />
       </Card>
     );
   }

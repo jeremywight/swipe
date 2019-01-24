@@ -3,7 +3,9 @@ import {
     View, 
     Animated,
     PanResponder,
-    Dimensions
+    Dimensions, 
+    LayoutAnimation,
+    UIManager
 } from 'react-native';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -19,6 +21,8 @@ static defaultProps = {
     constructor(props) {
         super(props);
 
+        // Build the function for actually animating the card
+        // both when it starts and when you release the action
         const position = new Animated.ValueXY();
         const panResponder = PanResponder.create({
             onStartShouldSetPanResponder: () => true,
@@ -39,6 +43,25 @@ static defaultProps = {
         this.state = { panResponder, position, index: 0 };
     }
 
+    // If you get a new set of Data, compare the next 
+    // set of DATA props to the first
+    // if it is not exactly the same, reset the index
+    // so that the Deck list resets back to 0 (as you would expect)
+    componentWillReceiveProps(nextProps) {
+        if (nextProps.data !== this.props.data) {
+            this.setState({ index: 0 })
+        };
+    }
+
+    // Adding a subtle animation on the vertical 
+    // advancing of the deck (after swipe)
+    componentWillUpdate() {
+        UIManager.setLayoutAnimationEnabledExperimental && UIManager.setLayoutAnimationEnabledExperimental(true);
+        LayoutAnimation.easeInEaseOut();
+    }
+    
+    // Making sure that once the card is swiped far enough, 
+    // it continues and completes the advance after you release
     forceSwipe(direction) {
         const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
         Animated.timing(this.state.position, {
@@ -47,6 +70,9 @@ static defaultProps = {
         }).start(() => this.onSwipeComplete(direction));
     }
 
+    // Setting the direction which also tells us the choice the user
+    // made, left or right. Left likely to be in the future associated
+    // with a no callback and right associated with a yes callback
     onSwipeComplete(direction) {
         const { onSwipeLeft, onSwipeRight, data } = this.props;
         const item = data[this.state.index];
@@ -56,12 +82,15 @@ static defaultProps = {
         this.setState({ index: this.state.index + 1 });
     }
 
+    // Set the position of the next card (after swipe) back to 0,0
+    // otherwise it would take the position of the previously swiped card
     resetPosition() {
         Animated.spring(this.state.position, {
             toValue: { x: 0, y: 0 }
         }).start();
     }
 
+    // Set the rotation and distance for rotation
     getCardStyle() {
         const { position } = this.state;
         const rotate = position.x.interpolate({
@@ -69,6 +98,9 @@ static defaultProps = {
             outputRange: ['-120deg', '0deg', '120deg']
         });
 
+        // Spread the props over the getLayout method 
+        // which is the menthod which actually applies 
+        // the animation to the item/View
         return { 
             ...position.getLayout(),
         transform: [{ rotate }]
@@ -87,7 +119,7 @@ static defaultProps = {
                 return (
                     <Animated.View
                     key={item.id}
-                    style={this.getCardStyle()}
+                    style={[this.getCardStyle(), styles.cardStyle]}
                     {...this.state.panResponder.panHandlers}
                     >
                         {this.props.renderCard(item)}
@@ -95,8 +127,15 @@ static defaultProps = {
                 );
             }
 
-            return this.props.renderCard(item);
-        });
+            return (
+                <Animated.View
+                key={item.id}
+                style={[styles.cardStyle, { top: 20 * (i - this.state.index) }]}
+                >
+                    {this.props.renderCard(item)}
+                </Animated.View>
+            );
+        }).reverse();
     }
 
     render() {
@@ -107,5 +146,13 @@ static defaultProps = {
         );
     };
 }
+
+const styles = {
+    cardStyle: {
+        position: 'absolute',
+        width: SCREEN_WIDTH,
+        marginTop: 50
+    }
+};
 
 export default Deck;
